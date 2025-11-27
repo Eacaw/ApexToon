@@ -321,4 +321,63 @@ private class ApexToonDecodingTest {
         Assert.areEqual(123, parsed.get('id'), 'JSON should contain id');
         Assert.areEqual('Ada', parsed.get('name'), 'JSON should contain name');
     }
+    
+    /**
+     * Test TOON v3.0 decoding of list-item objects with tabular array as first field.
+     * Per Section 10: tabular header on hyphen line, rows at depth +2, other fields at depth +1.
+     */
+    @IsTest
+    private static void testDecodeListItemWithTabularFirstField() {
+        // Given - v3.0 canonical form
+        String toon = 'items[1]:\n  - users[2]{id,name}:\n      1,Ada\n      2,Bob\n    status: active';
+
+        // When
+        Test.startTest();
+        Object result = ApexToon.decode(toon);
+        Test.stopTest();
+
+        // Then
+        Map<String, Object> obj = (Map<String, Object>) result;
+        List<Object> items = (List<Object>) obj.get('items');
+        Assert.areEqual(1, items.size(), 'Should have 1 item');
+        
+        Map<String, Object> firstItem = (Map<String, Object>) items[0];
+        Assert.areEqual('active', firstItem.get('status'), 'Should have status field');
+        
+        List<Object> users = (List<Object>) firstItem.get('users');
+        Assert.areEqual(2, users.size(), 'Should have 2 users');
+        
+        Map<String, Object> firstUser = (Map<String, Object>) users[0];
+        Assert.areEqual(1L, firstUser.get('id'), 'First user id');
+        Assert.areEqual('Ada', firstUser.get('name'), 'First user name');
+        
+        Map<String, Object> secondUser = (Map<String, Object>) users[1];
+        Assert.areEqual(2L, secondUser.get('id'), 'Second user id');
+        Assert.areEqual('Bob', secondUser.get('name'), 'Second user name');
+    }
+    
+    /**
+     * Test decoding empty object as list item (bare hyphen).
+     */
+    @IsTest
+    private static void testDecodeEmptyListItemObject() {
+        // Given
+        String toon = 'items[2]:\n  -\n  - id: 1';
+
+        // When
+        Test.startTest();
+        Object result = ApexToon.decode(toon);
+        Test.stopTest();
+
+        // Then
+        Map<String, Object> obj = (Map<String, Object>) result;
+        List<Object> items = (List<Object>) obj.get('items');
+        Assert.areEqual(2, items.size(), 'Should have 2 items');
+        
+        Map<String, Object> firstItem = (Map<String, Object>) items[0];
+        Assert.isTrue(firstItem.isEmpty(), 'First item should be empty object');
+        
+        Map<String, Object> secondItem = (Map<String, Object>) items[1];
+        Assert.areEqual(1L, secondItem.get('id'), 'Second item should have id');
+    }
 }

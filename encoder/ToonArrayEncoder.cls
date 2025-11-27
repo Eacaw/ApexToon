@@ -120,13 +120,16 @@ public class ToonArrayEncoder {
     
     /**
      * Encode an object as a list item.
-     * First field on same line as dash, rest indented.
+     * 
+     * Per TOON v3.0 (Section 10):
+     * - If first field is a tabular array: emit header on hyphen line, rows at depth +2, other fields at depth +1
+     * - For all other cases: first field on same line as dash, rest indented at depth +1
      */
     private static void encodeListItemObject(Map<String, Object> obj, ToonLineWriter writer, Integer depth, EncodeOptions options) {
         List<String> keys = new List<String>(obj.keySet());
         
         if (keys.isEmpty()) {
-            writer.push(depth, '- {}');
+            writer.push(depth, '-');
             return;
         }
         
@@ -134,9 +137,44 @@ public class ToonArrayEncoder {
         Object firstValue = obj.get(firstKey);
         String encodedKey = ToonPrimitiveEncoder.encodeKey(firstKey);
         
-        if (ToonTypeHelper.isPrimitive(firstValue)) {
+        // TOON v3.0: Handle tabular array as first field
+        if (ToonTypeHelper.isTabularArray(firstValue)) {
+            List<Object> tabularItems = (List<Object>) firstValue;
+            List<String> fields = ToonTypeHelper.getUniformKeys(tabularItems);
+            String header = ToonHeaderFormatter.formatTabularHeader(encodedKey, tabularItems.size(), fields, options);
+            
+            // Emit header on hyphen line: - key[N]{fields}:
+            writer.push(depth, '- ' + header);
+            
+            // Emit tabular rows at depth +2
+            String delimiter = options.getDelimiterString();
+            for (Object item : tabularItems) {
+                Map<String, Object> rowObj = (Map<String, Object>) item;
+                List<String> rowValues = new List<String>();
+                
+                for (String field : fields) {
+                    Object value = rowObj.get(field);
+                    rowValues.add(ToonPrimitiveEncoder.encodePrimitive(value, delimiter));
+                }
+                
+                writer.push(depth + 2, String.join(rowValues, delimiter));
+            }
+            
+            // Emit remaining fields at depth +1
+            for (Integer i = 1; i < keys.size(); i++) {
+                String key = keys[i];
+                Object value = obj.get(key);
+                ToonObjectEncoder.encodeKeyValuePair(key, value, writer, depth + 1, options);
+            }
+        } else if (ToonTypeHelper.isPrimitive(firstValue)) {
             String encodedValue = ToonPrimitiveEncoder.encodePrimitive(firstValue, options.getDelimiterString());
             writer.push(depth, '- ' + encodedKey + ': ' + encodedValue);
+            
+            for (Integer i = 1; i < keys.size(); i++) {
+                String key = keys[i];
+                Object value = obj.get(key);
+                ToonObjectEncoder.encodeKeyValuePair(key, value, writer, depth + 1, options);
+            }
         } else {
             writer.push(depth, '- ' + encodedKey + ':');
             if (ToonTypeHelper.isMap(firstValue)) {
@@ -144,12 +182,12 @@ public class ToonArrayEncoder {
             } else if (ToonTypeHelper.isList(firstValue)) {
                 encodeArray(null, (List<Object>) firstValue, writer, depth + 1, options);
             }
-        }
-        
-        for (Integer i = 1; i < keys.size(); i++) {
-            String key = keys[i];
-            Object value = obj.get(key);
-            ToonObjectEncoder.encodeKeyValuePair(key, value, writer, depth + 1, options);
+            
+            for (Integer i = 1; i < keys.size(); i++) {
+                String key = keys[i];
+                Object value = obj.get(key);
+                ToonObjectEncoder.encodeKeyValuePair(key, value, writer, depth + 1, options);
+            }
         }
     }
 }

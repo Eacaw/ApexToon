@@ -316,6 +316,10 @@ public class ToonValueDecoder {
     
     /**
      * Parse a single list item.
+     * 
+     * Per TOON v3.0 (Section 10):
+     * - If item starts with keyed tabular array: rows at depth +2, other fields at depth +1
+     * - For all other cases: first field on hyphen line, other fields at depth +1
      */
     private static Object parseListItem(ToonParser parser, String content, Integer depth) {
         String itemContent = content.length() > 2 ? content.substring(2).trim() : '';
@@ -326,8 +330,17 @@ public class ToonValueDecoder {
             return new Map<String, Object>();
         }
         
+        // Handle bare array header (e.g., "- [2]: a,b")
         if (parser.isArrayHeader(itemContent)) {
             return parseArray(parser, itemContent, depth + 1);
+        }
+        
+        // TOON v3.0: Handle keyed tabular array as first field (e.g., "- users[2]{id,name}:")
+        if (parser.isKeyedArray(itemContent) && parser.isTabularHeader(itemContent)) {
+            Map<String, Object> itemObj = new Map<String, Object>();
+            parseListItemTabularField(parser, itemContent, depth, itemObj);
+            parseListItemFieldsAtDepthPlusOne(parser, itemObj, depth);
+            return itemObj;
         }
         
         Integer colonIdx = parser.findUnquotedColon(itemContent);
@@ -345,6 +358,21 @@ public class ToonValueDecoder {
             key = ToonStringEscaper.unescape(key);
         }
         
+        // Check if key contains array brackets (keyed array that's not tabular)
+        if (key.contains('[')) {
+            Integer bracketIdx = key.indexOf('[');
+            String arrayKey = key.substring(0, bracketIdx).trim();
+            if (arrayKey.startsWith('"')) {
+                arrayKey = ToonStringValidator.removeQuotes(arrayKey);
+                arrayKey = ToonStringEscaper.unescape(arrayKey);
+            }
+            String arrayHeader = key.substring(bracketIdx) + ':' + (String.isBlank(value) ? '' : ' ' + value);
+            List<Object> arrayValue = parseArray(parser, arrayHeader, depth + 1);
+            itemObj.put(arrayKey, arrayValue);
+            parseListItemFields(parser, itemObj, depth);
+            return itemObj;
+        }
+        
         if (String.isBlank(value)) {
             Object nestedValue = parseNestedValue(parser, depth + 1);
             itemObj.put(key, nestedValue);
@@ -355,6 +383,131 @@ public class ToonValueDecoder {
         parseListItemFields(parser, itemObj, depth);
         
         return itemObj;
+    }
+    
+    /**
+     * Parse a tabular array field in a list item (v3.0 format).
+     * Reads header from hyphen line and rows at depth +2 relative to hyphen.
+     * Note: depth parameter is the parent array depth, hyphen is at depth+1.
+     */
+    private static void parseListItemTabularField(ToonParser parser, String content, Integer depth, Map<String, Object> itemObj) {
+        Integer bracketIdx = content.indexOf('[');
+        String key = content.substring(0, bracketIdx).trim();
+        
+        if (key.startsWith('"')) {
+            key = ToonStringValidator.removeQuotes(key);
+            key = ToonStringEscaper.unescape(key);
+        }
+        
+        String arrayHeader = content.substring(bracketIdx);
+        String arrayDelimiter = parser.extractDelimiterFromHeader(arrayHeader);
+        List<String> fields = parser.extractTabularFields(arrayHeader, arrayDelimiter);
+        
+        List<Object> result = new List<Object>();
+        
+        // Hyphen line is at depth+1, so rows are at (depth+1)+2 = depth+3
+        Integer rowDepth = depth + 3;
+        
+        // Read tabular rows at depth +2 relative to hyphen line
+        while (parser.hasMoreLines()) {
+            String line = parser.getLine(parser.getCurrentLineNumber());
+            
+            if (String.isBlank(line)) {
+                parser.nextLine();
+                continue;
+            }
+            
+            Integer lineDepth = parser.getDepth(line);
+            
+            // Rows must be at rowDepth (depth+3)
+            if (lineDepth != rowDepth) {
+                break;
+            }
+            
+            String rowContent = parser.getCurrentContent(lineDepth);
+            
+            // If we hit a key-value line, stop reading rows
+            Integer colonIdx = parser.findUnquotedColon(rowContent);
+            if (colonIdx > 0) {
+                // Check if colon appears before delimiter - means it's a key-value line
+                Integer delimIdx = findUnquotedDelimiter(rowContent, arrayDelimiter);
+                if (delimIdx < 0 || colonIdx < delimIdx) {
+                    break;
+                }
+            }
+            
+            Map<String, Object> row = parseTabularRow(rowContent, fields, arrayDelimiter);
+            result.add(row);
+            parser.nextLine();
+        }
+        
+        itemObj.put(key, result);
+    }
+    
+    /**
+     * Find index of first unquoted delimiter in content.
+     */
+    private static Integer findUnquotedDelimiter(String content, String delimiter) {
+        Boolean inQuotes = false;
+        Boolean escaped = false;
+        
+        for (Integer i = 0; i < content.length(); i++) {
+            String chr = content.substring(i, i + 1);
+            
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            
+            if (chr == '\\') {
+                escaped = true;
+            } else if (chr == '"') {
+                inQuotes = !inQuotes;
+            } else if (chr == delimiter && !inQuotes) {
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+    
+    /**
+     * Parse additional fields in a list item object at depth +1 relative to hyphen.
+     * Used after tabular array field in v3.0 format.
+     * Note: depth parameter is parent array depth, hyphen is at depth+1, sibling fields at depth+2.
+     */
+    private static void parseListItemFieldsAtDepthPlusOne(ToonParser parser, Map<String, Object> itemObj, Integer depth) {
+        // Hyphen is at depth+1, sibling fields are at (depth+1)+1 = depth+2
+        Integer siblingDepth = depth + 2;
+        
+        while (parser.hasMoreLines()) {
+            String line = parser.getLine(parser.getCurrentLineNumber());
+            
+            if (String.isBlank(line)) {
+                parser.nextLine();
+                continue;
+            }
+            
+            Integer lineDepth = parser.getDepth(line);
+            
+            // Fields are at siblingDepth (depth+2)
+            if (lineDepth != siblingDepth) {
+                break;
+            }
+            
+            String content = parser.getCurrentContent(lineDepth);
+            
+            // Stop if we hit another list item (shouldn't happen at this depth, but be safe)
+            if (content.startsWith('- ')) {
+                break;
+            }
+            
+            if (parser.isKeyedArray(content)) {
+                parseKeyedArrayIntoMap(parser, content, lineDepth, itemObj);
+            } else {
+                parseKeyValuePair(parser, content, lineDepth, itemObj);
+            }
+        }
     }
     
     /**

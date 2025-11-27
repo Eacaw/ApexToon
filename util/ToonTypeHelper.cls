@@ -172,4 +172,41 @@ public class ToonTypeHelper {
         Map<String, Object> firstItem = (Map<String, Object>) items[0];
         return new List<String>(firstItem.keySet());
     }
+    
+    /**
+     * Check if a value qualifies for tabular array format.
+     * Returns true if the value is a non-empty list of uniform maps with primitive-only values.
+     * Used for TOON v3.0 list-item object encoding.
+     */
+    public static Boolean isTabularArray(Object value) {
+        if (!isList(value)) {
+            return false;
+        }
+        
+        List<Object> items = (List<Object>) value;
+        
+        if (items.isEmpty()) {
+            return false;
+        }
+        
+        if (!areAllMaps(items)) {
+            return false;
+        }
+        
+        if (!haveUniformKeys(items)) {
+            return false;
+        }
+        
+        // Check all values are primitives
+        for (Object item : items) {
+            Map<String, Object> obj = (Map<String, Object>) item;
+            for (Object fieldValue : obj.values()) {
+                if (!isPrimitive(fieldValue)) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
 }

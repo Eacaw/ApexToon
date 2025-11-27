@@ -277,4 +277,76 @@ private class ApexToonEncodingTest {
         Assert.isTrue(result.contains('items'), 'Should contain items tabular arrayResult');
         Assert.isTrue(result.contains('active'), 'Should contain status value');
     }
+    
+    /**
+     * Test TOON v3.0 canonical form for list-item objects with tabular array as first field.
+     * Per Section 10: tabular header on hyphen line, rows at depth +2, other fields at depth +1.
+     */
+    @IsTest
+    private static void testEncodeListItemWithTabularFirstField() {
+        // Given - list item object with tabular array as first field
+        Map<String, Object> obj = new Map<String, Object>{
+            'items' => new List<Object>{
+                new Map<String, Object>{
+                    'users' => new List<Object>{
+                        new Map<String, Object>{ 'id' => 1, 'name' => 'Ada' },
+                        new Map<String, Object>{ 'id' => 2, 'name' => 'Bob' }
+                    },
+                    'status' => 'active'
+                }
+            }
+        };
+
+        // When
+        Test.startTest();
+        String result = ApexToon.encode(obj);
+        Test.stopTest();
+
+        // Then - verify v3.0 canonical form
+        Assert.isTrue(result.contains('items[1]:'), 'Should have items array header');
+        Assert.isTrue(result.contains('- users[2]{id,name}:'), 'Should have tabular header on hyphen line');
+        Assert.isTrue(result.contains('1,Ada'), 'Should have first tabular row');
+        Assert.isTrue(result.contains('2,Bob'), 'Should have second tabular row');
+        Assert.isTrue(result.contains('status: active'), 'Should have sibling field');
+        
+        // Verify depth structure: tabular rows should be at depth +2 (4 spaces from hyphen line)
+        String[] lines = result.split('\n');
+        Boolean foundTabularRow = false;
+        Boolean foundSiblingField = false;
+        for (String line : lines) {
+            if (line.contains('1,Ada') || line.contains('2,Bob')) {
+                Assert.isTrue(line.startsWith('      '), 'Tabular rows should be at depth +2 (6 spaces)');
+                foundTabularRow = true;
+            }
+            if (line.contains('status: active')) {
+                Assert.isTrue(line.startsWith('    ') && !line.startsWith('      '), 'Sibling field should be at depth +1 (4 spaces)');
+                foundSiblingField = true;
+            }
+        }
+        Assert.isTrue(foundTabularRow, 'Should find tabular row with correct indentation');
+        Assert.isTrue(foundSiblingField, 'Should find sibling field with correct indentation');
+    }
+    
+    /**
+     * Test empty object as list item uses bare hyphen per TOON v3.0.
+     */
+    @IsTest
+    private static void testEncodeEmptyListItemObject() {
+        // Given
+        Map<String, Object> obj = new Map<String, Object>{
+            'items' => new List<Object>{
+                new Map<String, Object>()
+            }
+        };
+
+        // When
+        Test.startTest();
+        String result = ApexToon.encode(obj);
+        Test.stopTest();
+
+        // Then
+        Assert.isTrue(result.contains('items[1]:'), 'Should have items array header');
+        Assert.isTrue(result.contains('  -'), 'Should have bare hyphen for empty object');
+        Assert.isFalse(result.contains('- {}'), 'Should NOT use curly braces for empty object');
+    }
 }

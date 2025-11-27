@@ -330,4 +330,101 @@ private class ToonTypeHelperTest {
         // Then
         Assert.areEqual(0, keys.size(), 'Should return empty list');
     }
+    
+    // ===============================
+    // isTabularArray Tests (v3.0)
+    // ===============================
+    
+    @IsTest
+    private static void testIsTabularArray_UniformMapsWithPrimitives() {
+        // Given - uniform maps with only primitive values
+        List<Object> items = new List<Object>{
+            new Map<String, Object>{ 'id' => 1, 'name' => 'Ada' },
+            new Map<String, Object>{ 'id' => 2, 'name' => 'Bob' }
+        };
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(items);
+        Test.stopTest();
+
+        // Then
+        Assert.isTrue(result, 'Should be tabular array');
+    }
+    
+    @IsTest
+    private static void testIsTabularArray_NonUniformKeys() {
+        // Given - maps with different keys
+        List<Object> items = new List<Object>{
+            new Map<String, Object>{ 'id' => 1, 'name' => 'Ada' },
+            new Map<String, Object>{ 'id' => 2, 'email' => 'bob@example.com' }
+        };
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(items);
+        Test.stopTest();
+
+        // Then
+        Assert.isFalse(result, 'Should not be tabular array with non-uniform keys');
+    }
+    
+    @IsTest
+    private static void testIsTabularArray_NestedObjects() {
+        // Given - maps with nested objects (not primitive-only)
+        List<Object> items = new List<Object>{
+            new Map<String, Object>{ 'id' => 1, 'meta' => new Map<String, Object>{ 'x' => 1 } },
+            new Map<String, Object>{ 'id' => 2, 'meta' => new Map<String, Object>{ 'x' => 2 } }
+        };
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(items);
+        Test.stopTest();
+
+        // Then
+        Assert.isFalse(result, 'Should not be tabular array with nested objects');
+    }
+    
+    @IsTest
+    private static void testIsTabularArray_EmptyList() {
+        // Given
+        List<Object> items = new List<Object>();
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(items);
+        Test.stopTest();
+
+        // Then
+        Assert.isFalse(result, 'Empty list should not be tabular array');
+    }
+    
+    @IsTest
+    private static void testIsTabularArray_NotAList() {
+        // Given
+        Object value = 'not a list';
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(value);
+        Test.stopTest();
+
+        // Then
+        Assert.isFalse(result, 'Non-list should not be tabular array');
+    }
+    
+    @IsTest
+    private static void testIsTabularArray_PrimitivesList() {
+        // Given - list of primitives (not maps)
+        List<Object> items = new List<Object>{ 1, 2, 3 };
+
+        // When
+        Test.startTest();
+        Boolean result = ToonTypeHelper.isTabularArray(items);
+        Test.stopTest();
+
+        // Then
+        Assert.isFalse(result, 'List of primitives should not be tabular array');
+    }
 }

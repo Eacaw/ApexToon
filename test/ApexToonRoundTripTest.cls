@@ -378,4 +378,83 @@ private class ApexToonRoundTripTest {
         Map<String, Object> level3 = (Map<String, Object>) level2.get('level3');
         Assert.areEqual('deep', level3.get('value'), 'Should preserve deep nesting');
     }
+    
+    /**
+     * Test TOON v3.0 round-trip for list-item objects with tabular array as first field.
+     */
+    @IsTest
+    private static void testRoundTripListItemWithTabularFirstField() {
+        // Given - list item object with tabular array as first field
+        Map<String, Object> original = new Map<String, Object>{
+            'items' => new List<Object>{
+                new Map<String, Object>{
+                    'users' => new List<Object>{
+                        new Map<String, Object>{ 'id' => 1, 'name' => 'Ada' },
+                        new Map<String, Object>{ 'id' => 2, 'name' => 'Bob' }
+                    },
+                    'status' => 'active'
+                },
+                new Map<String, Object>{
+                    'users' => new List<Object>{
+                        new Map<String, Object>{ 'id' => 3, 'name' => 'Charlie' }
+                    },
+                    'status' => 'pending'
+                }
+            }
+        };
+
+        // When
+        Test.startTest();
+        String toon = ApexToon.encode(original);
+        Object decoded = ApexToon.decode(toon);
+        Test.stopTest();
+
+        // Then
+        Map<String, Object> result = (Map<String, Object>) decoded;
+        List<Object> items = (List<Object>) result.get('items');
+        Assert.areEqual(2, items.size(), 'Should preserve items count');
+        
+        // First item
+        Map<String, Object> firstItem = (Map<String, Object>) items[0];
+        Assert.areEqual('active', firstItem.get('status'), 'Should preserve first item status');
+        List<Object> firstUsers = (List<Object>) firstItem.get('users');
+        Assert.areEqual(2, firstUsers.size(), 'Should preserve first users count');
+        
+        // Second item  
+        Map<String, Object> secondItem = (Map<String, Object>) items[1];
+        Assert.areEqual('pending', secondItem.get('status'), 'Should preserve second item status');
+        List<Object> secondUsers = (List<Object>) secondItem.get('users');
+        Assert.areEqual(1, secondUsers.size(), 'Should preserve second users count');
+    }
+    
+    /**
+     * Test round-trip for empty object as list item.
+     */
+    @IsTest
+    private static void testRoundTripEmptyListItemObject() {
+        // Given
+        Map<String, Object> original = new Map<String, Object>{
+            'items' => new List<Object>{
+                new Map<String, Object>(),
+                new Map<String, Object>{ 'id' => 1 }
+            }
+        };
+
+        // When
+        Test.startTest();
+        String toon = ApexToon.encode(original);
+        Object decoded = ApexToon.decode(toon);
+        Test.stopTest();
+
+        // Then
+        Map<String, Object> result = (Map<String, Object>) decoded;
+        List<Object> items = (List<Object>) result.get('items');
+        Assert.areEqual(2, items.size(), 'Should preserve items count');
+        
+        Map<String, Object> firstItem = (Map<String, Object>) items[0];
+        Assert.areEqual(0, firstItem.size(), 'Should preserve empty object');
+        
+        Map<String, Object> secondItem = (Map<String, Object>) items[1];
+        Assert.areEqual(1L, secondItem.get('id'), 'Should preserve second item');
+    }
 }

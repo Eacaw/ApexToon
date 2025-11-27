@@ -1,6 +1,6 @@
 # TOON Specification Compliance
 
-This document outlines how the ApexToon library complies with the TOON Specification v2.0.
+This document outlines how the ApexToon library complies with the TOON Specification v3.0.
 
 ## Overview
 
@@ -8,11 +8,11 @@ ApexToon is a complete implementation of the TOON (Token-Oriented Object Notatio
 
 ## Compliance Status
 
-✅ **Fully Compliant** with TOON Specification v2.0 (Working Draft, 2025-11-10)
+✅ **Fully Compliant** with TOON Specification v3.0 (Working Draft, 2025-11-24)
 
 ### Core Compliance Areas
 
-#### 1. Numeric Formatting (Section 3, Section 4)
+#### 1. Numeric Formatting (Section 2, Section 4)
 
 **Requirement**: Numbers must use canonical decimal form with trailing zeros removed.
 
@@ -109,7 +109,34 @@ users[2]{name,age}:
   Jane,25
 ```
 
-#### 6. Delimiter Scoping (Section 11)
+#### 6. Objects as List Items (Section 10) - v3.0 Update
+
+**Requirement**: List-item objects whose first field is a tabular array MUST use the canonical v3.0 form:
+- Tabular header on hyphen line: `- key[N]{fields}:`
+- Tabular rows at depth +2
+- Other fields at depth +1
+
+**Implementation**:
+- `ToonArrayEncoder.encodeListItemObject()` detects when first field is tabular
+- `ToonTypeHelper.isTabularArray()` checks if a value qualifies for tabular encoding
+- `ToonValueDecoder.parseListItem()` handles v3.0 format with rows at depth +2
+- `ToonValueDecoder.parseListItemTabularField()` parses tabular rows at correct depth
+
+**Example** (v3.0 canonical form):
+```
+items[1]:
+  - users[2]{id,name}:
+      1,Ada
+      2,Bob
+    status: active
+```
+
+In the above example:
+- `- users[2]{id,name}:` is the hyphen line with tabular header (depth 1)
+- `1,Ada` and `2,Bob` are tabular rows at depth +2 (depth 3, relative to parent)
+- `status: active` is a sibling field at depth +1 (depth 2)
+
+#### 7. Delimiter Scoping (Section 11)
 
 **Requirement**: Delimiter declared in header applies to all nested content.
 
@@ -119,7 +146,7 @@ users[2]{name,age}:
 - Delimiter applies to array values, tabular rows, and field lists
 - Nested headers can change delimiter for their scope
 
-#### 7. Indentation (Section 12)
+#### 8. Indentation (Section 12)
 
 **Requirement**: Consistent indentation for nested structures.
 
@@ -129,7 +156,7 @@ users[2]{name,age}:
 - Maintains depth tracking
 - Automatic indentation for nested objects and arrays
 
-#### 8. Root Form Discovery (Section 5)
+#### 9. Root Form Discovery (Section 5)
 
 **Requirement**: Detect root type (object, array, or primitive).
 
@@ -140,7 +167,7 @@ users[2]{name,age}:
 - Otherwise → object
 - Empty document → empty object
 
-#### 9. Decoding Rules (Section 4)
+#### 10. Decoding Rules (Section 4)
 
 **Requirement**: Parse tokens according to type inference rules.
 
@@ -186,25 +213,27 @@ contacts[2]{__type,FirstName,LastName}:
 
 All TOON spec compliance is validated through comprehensive test suites:
 
-- **95 unit tests** covering all encoding/decoding scenarios
+- **95+ unit tests** covering all encoding/decoding scenarios
 - **100% test pass rate**
 - Round-trip tests ensure lossless encoding/decoding
 - Edge cases: empty values, special characters, nested structures
 - Delimiter variations: comma, tab, pipe
 - Type preservation across encode/decode cycles
+- v3.0 nested tabular list-item tests
 
 ## Conformance Statement
 
 This implementation conforms to:
 
-- TOON Specification v2.0 (Working Draft, 2025-11-10)
-- All normative requirements in Sections 1-13
+- TOON Specification v3.0 (Working Draft, 2025-11-24)
+- All normative requirements in Sections 1-16 and Section 19
 - Encoding normalization (Section 3)
 - Decoding interpretation (Section 4)
 - Concrete syntax (Section 5)
 - Header syntax (Section 6)
 - String and key encoding (Section 7)
 - Object and array structures (Sections 8-9)
+- Objects as list items with v3.0 canonical form (Section 10)
 
 Deviations from spec:
 
@@ -216,18 +245,24 @@ Deviations from spec:
 
 Potential areas for future enhancement (not currently implemented):
 
-1. **Strict Mode** (Section 13): Currently permissive; could add strict validation
+1. **Strict Mode** (Section 14): Currently permissive; could add strict validation
 2. **Key Folding** (Section 13.4): Not implemented; all keys preserved as-is
 3. **Path Expansion** (Section 13.4): Dotted keys treated as literals
 4. **Custom Metadata**: Could extend `__type` pattern for other metadata needs
 
 ## References
 
-- TOON Specification: [./SPEC.md](./SPEC.md)
+- TOON Specification: [./SPECIFICATION.md](./SPECIFICATION.md)
 - Reference Implementation: https://github.com/toon-format/spec
 - ApexToon Documentation: [./README.md](./README.md)
 
 ## Version History
+
+- **1.1.0** (2025-11-27): Updated to TOON v3.0 compliance
+  - Objects as list items with tabular first field now use canonical v3.0 form
+  - Tabular rows at depth +2, other fields at depth +1
+  - Added `ToonTypeHelper.isTabularArray()` for tabular array detection
+  - Updated decoder to handle v3.0 nested tabular patterns
 
 - **1.0.0** (2025-11-19): Initial implementation with full TOON v2.0 compliance
   - Canonical number formatting
