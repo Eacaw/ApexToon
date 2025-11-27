@@ -12,26 +12,11 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, null, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, null, ',');
         Test.stopTest();
 
         // Then
         Assert.areEqual('tags[3]:', result, 'Should format simple array header');
-    }
-    
-    @IsTest
-    private static void testArrayHeaderWithLengthMarker() {
-        // Given
-        Integer length = 5;
-        String key = 'items';
-
-        // When
-        Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, null, ',', true);
-        Test.stopTest();
-
-        // Then
-        Assert.areEqual('items[#5]:', result, 'Should include length marker');
     }
     
     @IsTest
@@ -41,7 +26,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, null, null, ',', false);
+        String result = ToonHeaderFormatter.format(length, null, null, ',');
         Test.stopTest();
 
         // Then
@@ -56,7 +41,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, null, '\t', false);
+        String result = ToonHeaderFormatter.format(length, key, null, '\t');
         Test.stopTest();
 
         // Then
@@ -71,7 +56,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, null, '|', false);
+        String result = ToonHeaderFormatter.format(length, key, null, '|');
         Test.stopTest();
 
         // Then
@@ -87,7 +72,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, fields, ',');
         Test.stopTest();
 
         // Then
@@ -103,7 +88,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, fields, ',');
         Test.stopTest();
 
         // Then
@@ -119,27 +104,11 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, '\t', false);
+        String result = ToonHeaderFormatter.format(length, key, fields, '\t');
         Test.stopTest();
 
         // Then
         Assert.areEqual('data[2\t]{x\ty}:', result, 'Should use tab delimiter in fields');
-    }
-    
-    @IsTest
-    private static void testTabularHeaderWithLengthMarker() {
-        // Given
-        Integer length = 5;
-        String key = 'records';
-        List<String> fields = new List<String>{ 'id', 'status' };
-
-        // When
-        Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, ',', true);
-        Test.stopTest();
-
-        // Then
-        Assert.areEqual('records[#5]{id,status}:', result, 'Should include length marker in tabular header');
     }
     
     @IsTest
@@ -151,7 +120,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, fields, ',');
         Test.stopTest();
 
         // Then
@@ -166,7 +135,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, null, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, null, ',');
         Test.stopTest();
 
         // Then
@@ -182,7 +151,7 @@ private class ToonHeaderFormatterTest {
 
         // When
         Test.startTest();
-        String result = ToonHeaderFormatter.format(length, key, fields, ',', false);
+        String result = ToonHeaderFormatter.format(length, key, fields, ',');
         Test.stopTest();
 
         // Then
@@ -194,7 +163,7 @@ private class ToonHeaderFormatterTest {
         // Given
         String key = 'numbers';
         Integer length = 5;
-        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.COMMA, false);
+        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.COMMA);
 
         // When
         Test.startTest();
@@ -206,28 +175,12 @@ private class ToonHeaderFormatterTest {
     }
     
     @IsTest
-    private static void testFormatInlineHeaderWithLengthMarker() {
-        // Given
-        String key = 'ids';
-        Integer length = 3;
-        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.COMMA, true);
-
-        // When
-        Test.startTest();
-        String result = ToonHeaderFormatter.formatInlineHeader(key, length, options);
-        Test.stopTest();
-
-        // Then
-        Assert.areEqual('ids[#3]:', result, 'Should include length marker from options');
-    }
-    
-    @IsTest
     private static void testFormatTabularHeader() {
         // Given
         String key = 'users';
         Integer length = 10;
         List<String> fields = new List<String>{ 'id', 'name', 'email' };
-        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.COMMA, false);
+        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.COMMA);
 
         // When
         Test.startTest();
@@ -244,7 +197,7 @@ private class ToonHeaderFormatterTest {
         String key = 'data';
         Integer length = 2;
         List<String> fields = new List<String>{ 'a', 'b' };
-        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.TAB, false);
+        EncodeOptions options = new EncodeOptions(2, ToonDelimiter.TAB);
 
         // When
         Test.startTest();

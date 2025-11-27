@@ -14,7 +14,6 @@ private class EncodeOptionsTest {
         // Then
         Assert.areEqual(2, opts.indent, 'Default indent should be 2');
         Assert.areEqual(ToonDelimiter.COMMA, opts.delimiter, 'Default delimiter should be COMMA');
-        Assert.areEqual(false, opts.lengthMarker, 'Default lengthMarker should be false');
         Assert.areEqual(',', opts.getDelimiterString(), 'Delimiter string should be comma');
     }
     
@@ -22,13 +21,12 @@ private class EncodeOptionsTest {
     private static void testCustomOptions() {
         // Given / When
         Test.startTest();
-        EncodeOptions opts = new EncodeOptions(4, ToonDelimiter.TAB, true);
+        EncodeOptions opts = new EncodeOptions(4, ToonDelimiter.TAB);
         Test.stopTest();
 
         // Then
         Assert.areEqual(4, opts.indent, 'Custom indent should be 4');
         Assert.areEqual(ToonDelimiter.TAB, opts.delimiter, 'Custom delimiter should be TAB');
-        Assert.areEqual(true, opts.lengthMarker, 'Custom lengthMarker should be true');
         Assert.areEqual('\t', opts.getDelimiterString(), 'Delimiter string should be tab');
     }
     
@@ -36,9 +34,9 @@ private class EncodeOptionsTest {
     private static void testDelimiterStrings() {
         // Given / When
         Test.startTest();
-        EncodeOptions commaOpts = new EncodeOptions(2, ToonDelimiter.COMMA, false);
-        EncodeOptions tabOpts = new EncodeOptions(2, ToonDelimiter.TAB, false);
-        EncodeOptions pipeOpts = new EncodeOptions(2, ToonDelimiter.PIPE, false);
+        EncodeOptions commaOpts = new EncodeOptions(2, ToonDelimiter.COMMA);
+        EncodeOptions tabOpts = new EncodeOptions(2, ToonDelimiter.TAB);
+        EncodeOptions pipeOpts = new EncodeOptions(2, ToonDelimiter.PIPE);
         Test.stopTest();
 
         // Then

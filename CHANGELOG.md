@@ -4,7 +4,7 @@ All notable changes to ApexToon will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.1.0] - 2025-11-27
+## [0.2.0] - 2025-11-27
 
 ### Added
 
@@ -28,11 +28,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ToonValueDecoder.parseListItem()` updated to detect and handle v3.0 keyed tabular arrays
 - Updated `COMPLIANCE.md` to reference v3.0 specification
 
+### Removed
+
+- **BREAKING**: Removed `lengthMarker` option from `EncodeOptions` (was `[#N]` syntax, removed in TOON spec v2.0)
+- Removed `LENGTH_MARKER` constant from `ToonConstants`
+- Removed length marker parameter from `ToonHeaderFormatter.format()` method
+
 ### Fixed
 
 - List-item objects with tabular array as first field now encode/decode correctly per v3.0 spec
 
-## [1.0.0] - 2025-11-19
+## [0.1.0] - 2025-11-19
 
 ### Added
 

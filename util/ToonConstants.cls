@@ -17,7 +17,6 @@ public class ToonConstants {
     public static final String OBJECT_START = '{';
     public static final String OBJECT_END = '}';
     
-    public static final String LENGTH_MARKER = '#';
     public static final String LIST_ITEM_PREFIX = '- ';
     
     public static final String NULL_VALUE = 'null';

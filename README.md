@@ -207,7 +207,6 @@ String jsonOutput = ApexToon.decodeToJson(toon);
 - **Tabular Arrays**: Optimized encoding for uniform object arrays
 - **Custom Delimiters**: Comma (default), Tab, Pipe
 - **Indentation Control**: Configurable spacing
-- **Length Markers**: Optional explicit length indicators
 
 ### ✅ Decoding
 
@@ -275,13 +274,12 @@ public static String encodeSObjects(List<SObject> records, List<String> fieldNam
 public class EncodeOptions {
     public Integer indent;              // Spaces per level (default: 2)
     public ToonDelimiter delimiter;     // COMMA, TAB, PIPE (default: COMMA)
-    public Boolean lengthMarker;        // Include # prefix (default: false)
 
     // Constructor with defaults
     public EncodeOptions()
 
     // Constructor with custom values
-    public EncodeOptions(Integer indent, ToonDelimiter delimiter, Boolean lengthMarker)
+    public EncodeOptions(Integer indent, ToonDelimiter delimiter)
 }
 ```
 
@@ -404,29 +402,12 @@ String toon = ApexToon.encodeSObjects(products, fields);
 
 ```apex
 // Use tabs for better spreadsheet compatibility
-EncodeOptions opts = new EncodeOptions(2, ToonDelimiter.TAB, false);
+EncodeOptions opts = new EncodeOptions(2, ToonDelimiter.TAB);
 String toon = ApexToon.encode(data, opts);
 
 // Use pipes for clarity with comma-heavy data
-EncodeOptions pipeOpts = new EncodeOptions(2, ToonDelimiter.PIPE, false);
+EncodeOptions pipeOpts = new EncodeOptions(2, ToonDelimiter.PIPE);
 String toon = ApexToon.encode(addresses, pipeOpts);
-```
-
-### Length Markers
-
-```apex
-// Add explicit length markers for LLM validation
-EncodeOptions opts = new EncodeOptions(2, ToonDelimiter.COMMA, true);
-String toon = ApexToon.encode(data, opts);
-```
-
-**Output:**
-
-```
-items[#3,]{sku,qty}:
-  A1,2
-  B2,5
-  C3,1
 ```
 
 ### Complex Nested Structures

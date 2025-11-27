@@ -1,8 +1,7 @@
 /**
  * Formats array and tabular headers for TOON format.
  * 
- * Handles generation of array headers with length markers, delimiters,
- * and field lists for tabular format.
+ * Handles generation of array headers with delimiters and field lists for tabular format.
  */
 public class ToonHeaderFormatter {
     
@@ -13,31 +12,25 @@ public class ToonHeaderFormatter {
      * Comma is the default and is omitted from the bracket segment.
      * 
      * Examples:
-     *   format(3, 'tags', null, ',', false) -> 'tags[3]:'
-     *   format(3, 'tags', null, ',', true) -> 'tags[#3]:'
-     *   format(2, 'items', ['id','name'], ',', false) -> 'items[2]{id,name}:'
-     *   format(3, null, null, '\t', false) -> '[3\t]:'  (tab explicitly shown)
-     *   format(3, null, null, '|', false) -> '[3|]:'   (pipe explicitly shown)
+     *   format(3, 'tags', null, ',') -> 'tags[3]:'
+     *   format(2, 'items', ['id','name'], ',') -> 'items[2]{id,name}:'
+     *   format(3, null, null, '\t') -> '[3\t]:'  (tab explicitly shown)
+     *   format(3, null, null, '|') -> '[3|]:'   (pipe explicitly shown)
      * 
      * @param length Number of items in array
      * @param key Optional key/prefix (null for standalone array)
      * @param fields Optional field list for tabular format
      * @param delimiter The delimiter character
-     * @param lengthMarker Whether to include # length marker
      * @return Formatted header string
      */
-    public static String format(Integer length, String key, List<String> fields, String delimiter, Boolean lengthMarker) {
+    public static String format(Integer length, String key, List<String> fields, String delimiter) {
         List<String> parts = new List<String>();
         
         if (key != null) {
             parts.add(ToonPrimitiveEncoder.encodeKey(key));
         }
         
-        String lengthPart = '[';
-        if (lengthMarker) {
-            lengthPart += ToonConstants.LENGTH_MARKER;
-        }
-        lengthPart += String.valueOf(length);
+        String lengthPart = '[' + String.valueOf(length);
         
         // Per TOON spec: only include delimiter symbol when NOT comma
         // Comma is the default and omitted from bracket segment
@@ -85,8 +78,7 @@ public class ToonHeaderFormatter {
             length,
             key,
             null,
-            options.getDelimiterString(),
-            options.lengthMarker
+            options.getDelimiterString()
         );
     }
     
@@ -104,8 +96,7 @@ public class ToonHeaderFormatter {
             length,
             key,
             fields,
-            options.getDelimiterString(),
-            options.lengthMarker
+            options.getDelimiterString()
         );
     }
 }
